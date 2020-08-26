@@ -654,6 +654,7 @@ sub parseSmartctlDevice {
    my $idev   = $devices{ $dev };
    my $temp   = "";
    my $poh    = "";
+   my $health = "";
    for( `smartctl -a /dev/$dev` ) {
       (my $line) = /^(.*)$/;
       if ( $line =~ m/^190 / ) {
@@ -672,6 +673,10 @@ sub parseSmartctlDevice {
             }
         }
       }
+      
+      if ( $line =~ m/^SMART overall-health self-assessment test result:/ ) {
+               $health = (split ' ', $line)[5];
+	}
 
       if ( $line =~ m/^  9 / ) {
          $poh = (split ' ', $line)[9];
@@ -690,9 +695,13 @@ sub parseSmartctlDevice {
    if ( $poh eq "" ) {
       $poh = "???"
    }
+   if ( $health eq "" ) {
+      $health = "???"
+   }
 
    $idev->{'temperature'} = $temp;
    $idev->{'poh'}         = $poh;
+   $idev->{'health'}         = $health;
 }
 
 sub completeDiskType {
@@ -967,7 +976,7 @@ sub parseArgumentsDiskList {
       }
 
       if ( $arg eq "-all" ) {
-          $output_columns = "pPlzZMdtDUTSRHhemosX" . $output_columns;
+          $output_columns = "pPlzZMdtDUTSRHhemosXE" . $output_columns;
           next;
       }
       if ( $arg eq "-long" ) {
@@ -1423,6 +1432,7 @@ sub getColumnLayout {
    if( $col eq "S" ) { $owner = 'device'   ; $info = 'serial';          $title="serial";                         }
    if( $col eq "R" ) { $owner = 'device'   ; $info = 'rpm';             $title="rpm";            $align="right"; }
    if( $col eq "H" ) { $owner = 'smartctl' ; $info = 'temperature';     $title="temp";           $align="right"; }
+   if( $col eq "E" ) { $owner = 'smartctl' ; $info = 'health';     	$title="health";         		 }
    if( $col eq "h" ) { $owner = 'smartctl' ; $info = 'poh';             $title="power-on-hours"; $align="right"; }
    if( $col eq "e" ) { $owner = 'serial'   ; $info = 'url';             $title="sas-location";                   }
    if( $col eq "m" ) { $owner = 'device'   ; $info = 'multipath';       $title="multipath";                      }
